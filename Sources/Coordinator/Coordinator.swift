@@ -20,6 +20,7 @@ public protocol Coordinator: class {
 
     func nextViewController(vc: UIViewController, transitionStyle: Transition)
     func nextCoordinator(coordinator: Coordinator)
+    func popToRoot(animated: Bool)
 
     func handleEvent(with event: Event)
     func childDidFinish(_ child: Coordinator?)
@@ -46,6 +47,12 @@ extension Coordinator {
     public func nextViewController(vc: UIViewController, transitionStyle: Transition) {
         vc.coordinator = self
         handleTransition(vc: vc, with: transitionStyle)
+    }
+    
+    public func popToRoot(animated: Bool = true) {
+        if let controllers = rootNavigationController.popToRootViewController(animated: animated) {
+            controllers.forEach { childDidFinish($0.coordinator) }
+        }
     }
 
     private func handleTransition(vc: UIViewController, with transitionStyle: Transition) {
