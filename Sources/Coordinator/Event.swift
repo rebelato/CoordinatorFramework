@@ -7,4 +7,4 @@
 
 import Foundation
 
-protocol Event {}
+public protocol Event {}

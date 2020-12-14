@@ -13,7 +13,7 @@ public enum Transition {
     case present
 }
 
-protocol Coordinator: class {
+public protocol Coordinator: class {
     var childCoordinators: [Coordinator] { get set }
     var rootNavigationController: UINavigationController { get set }
     var parentCoordinator: Coordinator? { get set }
@@ -27,7 +27,7 @@ protocol Coordinator: class {
 
 extension Coordinator {
 
-    func childDidFinish(_ child: Coordinator?) {
+    public func childDidFinish(_ child: Coordinator?) {
         for (index, coordinator) in childCoordinators.enumerated() {
             if coordinator === child {
                 childCoordinators.remove(at: index)
@@ -36,14 +36,14 @@ extension Coordinator {
         }
     }
 
-    func handleEvent(with event: Event) { }
+    public func handleEvent(with event: Event) { }
 
-    func nextCoordinator(coordinator: Coordinator) {
+    public func nextCoordinator(coordinator: Coordinator) {
         coordinator.parentCoordinator = self
         childCoordinators.append(coordinator)
     }
 
-    func nextViewController(vc: UIViewController, transitionStyle: Transition) {
+    public func nextViewController(vc: UIViewController, transitionStyle: Transition) {
         vc.coordinator = self
         handleTransition(vc: vc, with: transitionStyle)
     }

@@ -9,7 +9,7 @@
 import UIKit
 
 extension UIViewController {
-    var coordinator: Coordinator? {
+    public var coordinator: Coordinator? {
         get { return AssociatedObject.get(base: self, key: &CoordiantorKeys.responderKey) }
         set { AssociatedObject.set(base: self, key: &CoordiantorKeys.responderKey, value: newValue) }
     }
