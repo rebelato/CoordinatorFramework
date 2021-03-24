@@ -21,7 +21,6 @@ public protocol Coordinator: class {
     func nextViewController(vc: UIViewController, transitionStyle: Transition)
     func nextCoordinator(coordinator: Coordinator)
     func popToRoot(animated: Bool)
-
     func handleEvent(with event: Event)
     func childDidFinish(_ child: Coordinator?)
 }
