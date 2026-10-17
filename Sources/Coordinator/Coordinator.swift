@@ -6,61 +6,58 @@
 //  Copyright © 2020 Lucas Rebelato. All rights reserved.
 //
 
-import UIKit
+/// Owns the navigation of one part of the app and the coordinators below it.
+///
+/// Coordinators form a tree. An event sent with ``send(_:)`` is offered to
+/// ``handle(_:)`` first; when it returns `false`, the event moves up to the
+/// parent, so a flow only handles what it knows and leaves the rest to the
+/// coordinator that owns it.
+///
+/// Conforming types should keep `parentCoordinator` as a `weak` property to
+/// avoid a retain cycle between parent and child.
+@MainActor
+public protocol Coordinator: AnyObject {
+    var parentCoordinator: (any Coordinator)? { get set }
+    var childCoordinators: [any Coordinator] { get set }
 
-public enum Transition {
-    case push
-    case present
-}
+    /// Prepares the initial state of the flow. Called once, by whoever creates the coordinator.
+    func start()
 
-public protocol Coordinator: class {
-    var childCoordinators: [Coordinator] { get set }
-    var rootNavigationController: UINavigationController { get set }
-    var parentCoordinator: Coordinator? { get set }
-
-    func nextViewController(vc: UIViewController, transitionStyle: Transition)
-    func nextCoordinator(coordinator: Coordinator)
-    func popToRoot(animated: Bool)
-    func handleEvent(with event: Event)
-    func childDidFinish(_ child: Coordinator?)
+    /// Reacts to an event. Return `true` when the event was handled here,
+    /// `false` to let it continue to the parent coordinator.
+    func handle(_ event: any Event) -> Bool
 }
 
 extension Coordinator {
 
-    public func childDidFinish(_ child: Coordinator?) {
-        for (index, coordinator) in childCoordinators.enumerated() {
-            if coordinator === child {
-                childCoordinators.remove(at: index)
-                break
-            }
+    public func start() {}
+
+    public func handle(_ event: any Event) -> Bool { false }
+
+    /// Offers the event to this coordinator and, if it is not handled, to each parent in turn.
+    public func send(_ event: any Event) {
+        if !handle(event) {
+            parentCoordinator?.send(event)
         }
     }
 
-    public func handleEvent(with event: Event) { }
-
-    public func nextCoordinator(coordinator: Coordinator) {
-        coordinator.parentCoordinator = self
-        childCoordinators.append(coordinator)
+    /// Attaches a child coordinator and starts it.
+    public func addChild(_ child: any Coordinator) {
+        child.parentCoordinator = self
+        childCoordinators.append(child)
+        child.start()
     }
 
-    public func nextViewController(vc: UIViewController, transitionStyle: Transition) {
-        vc.coordinator = self
-        handleTransition(vc: vc, with: transitionStyle)
-    }
-    
-    public func popToRoot(animated: Bool = true) {
-        if let controllers = rootNavigationController.popToRootViewController(animated: animated) {
-            controllers.forEach { childDidFinish($0.coordinator) }
+    /// Detaches a child coordinator, usually when its flow is over.
+    public func childDidFinish(_ child: any Coordinator) {
+        childCoordinators.removeAll { $0 === child }
+        if child.parentCoordinator === self {
+            child.parentCoordinator = nil
         }
     }
 
-    private func handleTransition(vc: UIViewController, with transitionStyle: Transition) {
-        switch transitionStyle {
-        case .push:
-            rootNavigationController.pushViewController(vc, animated: true)
-        case .present:
-            rootNavigationController.present(vc, animated: true)
-        }
+    /// Tells the parent that this flow is over.
+    public func finish() {
+        parentCoordinator?.childDidFinish(self)
     }
-    
 }
