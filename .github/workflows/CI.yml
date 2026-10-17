@@ -7,14 +7,14 @@ on:
     branches: [ master ]
 
 jobs:
-  build-and-test:
-    runs-on: macos-latest
+  test:
+    runs-on: macos-15
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
-    - name: Select Xcode
-      run: sudo xcode-select -switch /Applications/Xcode_12.app
+    - name: Test on macOS
+      run: swift test
 
-    - name: Build and test
-      run: xcodebuild clean build test -project App/Coordinator.xcodeproj -scheme "CI" -sdk iphonesimulator -destination "platform=iOS Simulator,name=iPhone 11" ONLY_ACTIVE_ARCH=NO CODE_SIGNING_REQUIRED=NO
+    - name: Build for iOS Simulator
+      run: xcodebuild build -scheme Coordinator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO
